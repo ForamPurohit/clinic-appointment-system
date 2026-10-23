@@ -1,0 +1,51 @@
+<div class="page-head">
+  <h1>Specialties</h1>
+  <p class="muted">Patients choose from these when they book. A specialty with doctors can't be deleted.</p>
+</div>
+
+<div class="split">
+  <section class="panel form-panel">
+    <h2>{{ editingId() ? 'Edit specialty' : 'Add a specialty' }}</h2>
+    <form (ngSubmit)="save()">
+      <div class="field">
+        <label for="s-name">Name</label>
+        <input id="s-name" name="name" [(ngModel)]="name" maxlength="100" />
+      </div>
+      <div class="field">
+        <label for="s-desc">Description <span class="optional">optional</span></label>
+        <textarea id="s-desc" name="description" rows="3" [(ngModel)]="description" maxlength="500"></textarea>
+      </div>
+      @if (error()) {
+        <p class="alert alert--error" role="alert">{{ error() }}</p>
+      }
+      <div class="actions">
+        <button type="submit" class="btn btn--primary" [disabled]="saving()">
+          {{ saving() ? 'Saving…' : editingId() ? 'Save changes' : 'Add specialty' }}
+        </button>
+        @if (editingId()) {
+          <button type="button" class="btn btn--quiet" (click)="resetForm()">Cancel</button>
+        }
+      </div>
+    </form>
+  </section>
+
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>Specialty</th><th class="num">Doctors</th><th></th></tr></thead>
+      <tbody>
+        @for (s of items(); track s.id) {
+          <tr>
+            <td><strong>{{ s.name }}</strong><br /><span class="muted">{{ s.description }}</span></td>
+            <td class="num">{{ s.doctorCount }}</td>
+            <td class="cell-actions">
+              <button type="button" class="btn btn--quiet btn--sm" (click)="edit(s)">Edit</button>
+              <button type="button" class="btn btn--danger-quiet btn--sm" (click)="remove(s)">Delete</button>
+            </td>
+          </tr>
+        } @empty {
+          <tr><td colspan="3" class="empty-cell">No specialties yet. Add one to start taking bookings.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

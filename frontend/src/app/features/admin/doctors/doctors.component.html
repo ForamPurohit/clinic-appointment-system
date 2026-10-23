@@ -1,0 +1,154 @@
+<div class="page-head page-head--split">
+  <div>
+    <h1>Doctors</h1>
+    <p class="muted">Add doctors, set their hours, and turn accounts off when they leave.</p>
+  </div>
+  @if (!formOpen()) {
+    <button type="button" class="btn btn--primary" (click)="openCreate()">Add doctor</button>
+  }
+</div>
+
+@if (formOpen()) {
+  <section class="panel form-panel">
+    <h2>{{ editing() ? 'Edit ' + editing()!.fullName : 'Add a doctor' }}</h2>
+
+    <form [formGroup]="form" (ngSubmit)="save()" novalidate>
+      <div class="field-row">
+        <div class="field">
+          <label for="d-name">Full name</label>
+          <input id="d-name" formControlName="fullName" placeholder="Dr. Jane Doe" />
+        </div>
+        <div class="field">
+          <label for="d-spec">Specialty</label>
+          <select id="d-spec" formControlName="specializationId">
+            <option [ngValue]="0" disabled>Choose…</option>
+            @for (s of specializations(); track s.id) {
+              <option [ngValue]="s.id">{{ s.name }}</option>
+            }
+          </select>
+          @if (form.controls.specializationId.touched && form.controls.specializationId.invalid) {
+            <span class="field__error">Choose a specialty.</span>
+          }
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="d-email">Sign-in email</label>
+          <input id="d-email" type="email" formControlName="email" />
+        </div>
+        @if (!editing()) {
+          <div class="field">
+            <label for="d-pass">Temporary password</label>
+            <input id="d-pass" type="text" formControlName="password" />
+            <span class="field__hint">Share this with the doctor. At least 6 characters.</span>
+          </div>
+        }
+        <div class="field">
+          <label for="d-phone">Phone <span class="optional">optional</span></label>
+          <input id="d-phone" type="tel" formControlName="phoneNumber" />
+        </div>
+      </div>
+
+      <div class="field-row field-row--narrow">
+        <div class="field">
+          <label for="d-exp">Years of experience</label>
+          <input id="d-exp" type="number" min="0" formControlName="yearsOfExperience" />
+        </div>
+        <div class="field">
+          <label for="d-fee">Consultation fee (₹)</label>
+          <input id="d-fee" type="number" min="0" formControlName="consultationFee" />
+        </div>
+        <div class="field">
+          <label for="d-start">Starts at</label>
+          <input id="d-start" type="time" formControlName="workStartTime" />
+        </div>
+        <div class="field">
+          <label for="d-end">Ends at</label>
+          <input id="d-end" type="time" formControlName="workEndTime" />
+        </div>
+        <div class="field">
+          <label for="d-slot">Slot length</label>
+          <select id="d-slot" formControlName="slotDurationMinutes">
+            <option [ngValue]="15">15 minutes</option>
+            <option [ngValue]="20">20 minutes</option>
+            <option [ngValue]="30">30 minutes</option>
+            <option [ngValue]="45">45 minutes</option>
+            <option [ngValue]="60">60 minutes</option>
+          </select>
+        </div>
+      </div>
+
+      <fieldset class="field">
+        <legend>Working days</legend>
+        <div class="chip-row">
+          @for (day of weekdays; track day; let i = $index) {
+            <button type="button" class="chip chip--sm" [class.is-selected]="selectedDays().includes(i)"
+                    [attr.aria-pressed]="selectedDays().includes(i)" (click)="toggleDay(i)">{{ day }}</button>
+          }
+        </div>
+      </fieldset>
+
+      <div class="field">
+        <label for="d-bio">Short bio <span class="optional">optional</span></label>
+        <textarea id="d-bio" rows="2" formControlName="bio"></textarea>
+      </div>
+
+      @if (editing()) {
+        <label class="check">
+          <input type="checkbox" formControlName="isActive" />
+          Accepting appointments
+        </label>
+      }
+
+      @if (formError()) {
+        <p class="alert alert--error" role="alert">{{ formError() }}</p>
+      }
+
+      <div class="actions">
+        <button type="submit" class="btn btn--primary" [disabled]="saving()">
+          {{ saving() ? 'Saving…' : editing() ? 'Save changes' : 'Add doctor' }}
+        </button>
+        <button type="button" class="btn btn--quiet" (click)="closeForm()">Cancel</button>
+      </div>
+    </form>
+  </section>
+}
+
+@if (error()) {
+  <p class="alert alert--error" role="alert">{{ error() }}</p>
+}
+
+<div class="table-wrap">
+  <table class="table">
+    <thead>
+      <tr><th>Doctor</th><th>Specialty</th><th>Hours</th><th>Rating</th><th class="num">Fee</th><th>Status</th><th></th></tr>
+    </thead>
+    <tbody>
+      @if (loading()) {
+        <tr><td colspan="7" class="empty-cell">Loading doctors…</td></tr>
+      }
+      @for (d of doctors(); track d.id) {
+        <tr [class.is-dim]="!d.isActive">
+          <td><strong>{{ d.fullName }}</strong><br /><span class="muted">{{ d.email }}</span></td>
+          <td>{{ d.specializationName }}</td>
+          <td>{{ daysLabel(d) }}<br /><span class="muted">{{ d.workStartTime }}–{{ d.workEndTime }}, {{ d.slotDurationMinutes }} min</span></td>
+          <td>
+            @if (d.reviewCount > 0) {
+              <app-stars [value]="d.averageRating ?? null" [count]="d.reviewCount" />
+            } @else {
+              <span class="muted">No reviews</span>
+            }
+          </td>
+          <td class="num">{{ d.consultationFee | currency: 'INR' : 'symbol' : '1.0-0' }}</td>
+          <td>{{ d.isActive ? 'Active' : 'Inactive' }}</td>
+          <td class="cell-actions"><button type="button" class="btn btn--quiet btn--sm" (click)="openEdit(d)">Edit</button></td>
+        </tr>
+      } @empty {
+        @if (!loading()) {
+          <tr><td colspan="7" class="empty-cell">No doctors yet. Add the first one to open bookings.</td></tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>

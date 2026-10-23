@@ -1,0 +1,89 @@
+<div class="page-head">
+  <h1>My schedule</h1>
+  @if (profile(); as p) {
+    <p class="muted">
+      {{ p.specializationName }}. Clinic hours: {{ hoursLabel() }}.
+      @if (p.reviewCount > 0) {
+        Patients rate you {{ p.averageRating }} out of 5 from {{ p.reviewCount }} {{ p.reviewCount === 1 ? 'review' : 'reviews' }}.
+      }
+    </p>
+  }
+  <p class="live-badge"><span aria-hidden="true">●</span> Updates live as patients book</p>
+</div>
+
+<div class="date-nav">
+  <button type="button" class="btn btn--quiet btn--sm" (click)="shiftDay(-1)" aria-label="Previous day">Previous day</button>
+  <div class="date-nav__current">
+    <strong>{{ dateObj() | date: 'EEEE d MMMM' }}</strong>
+    <span class="muted">{{ appointments().length }} booked, {{ scheduledCount() }} still to see</span>
+  </div>
+  <button type="button" class="btn btn--quiet btn--sm" (click)="shiftDay(1)" aria-label="Next day">Next day</button>
+  <input type="date" class="date-nav__picker" [ngModel]="date()" (ngModelChange)="onDateInput($event)"
+         aria-label="Jump to date" />
+  @if (!isToday()) {
+    <button type="button" class="btn btn--quiet btn--sm" (click)="goToday()">Today</button>
+  }
+</div>
+
+@if (error()) {
+  <p class="alert alert--error" role="alert">{{ error() }}</p>
+}
+
+@if (loading()) {
+  <p class="muted">Loading schedule…</p>
+} @else {
+  <ul class="appt-list appt-list--timeline">
+    @for (a of appointments(); track a.id) {
+      <li class="appt" [class.is-dim]="a.status === 'Cancelled'">
+        <div class="appt__when">
+          <span class="appt__time">{{ a.startTime | date: 'h:mm a' }}</span>
+          <span class="appt__day">until {{ a.endTime | date: 'h:mm' }}</span>
+        </div>
+
+        <div class="appt__body">
+          <strong>{{ a.patientName }}</strong>
+          @if (a.patientPhone) {
+            <a class="muted" [href]="'tel:' + a.patientPhone">{{ a.patientPhone }}</a>
+          }
+          <p>{{ a.reason }}</p>
+          @if (a.notes && activeId() !== a.id) {
+            <p class="appt__notes"><span>Your notes:</span> {{ a.notes }}</p>
+          }
+
+          @if (activeId() === a.id) {
+            <div class="notes-panel">
+              <label for="notes-{{ a.id }}">Visit notes for the patient</label>
+              <textarea id="notes-{{ a.id }}" rows="3" [(ngModel)]="notes" maxlength="1000"
+                        placeholder="Diagnosis, advice or follow-up"></textarea>
+              <div class="actions">
+                <button type="button" class="btn btn--primary btn--sm" (click)="setStatus(a, 'Completed')"
+                        [disabled]="savingId() === a.id">
+                  {{ savingId() === a.id ? 'Saving…' : 'Mark completed' }}
+                </button>
+                <button type="button" class="btn btn--quiet btn--sm" (click)="activeId.set(null)">Close</button>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="appt__side">
+          <app-status-badge [status]="a.status" />
+          @if (a.status === 'Scheduled' && activeId() !== a.id) {
+            @if (hasStarted(a)) {
+              <button type="button" class="btn btn--primary btn--sm" (click)="openNotes(a)">Complete visit</button>
+              <button type="button" class="btn btn--quiet btn--sm" (click)="setStatus(a, 'NoShow')"
+                      [disabled]="savingId() === a.id">No-show</button>
+            }
+            <button type="button" class="btn btn--danger-quiet btn--sm" (click)="setStatus(a, 'Cancelled')"
+                    [disabled]="savingId() === a.id">Cancel</button>
+          }
+        </div>
+      </li>
+    } @empty {
+      <li class="empty">
+        <p>No appointments on this day.</p>
+        <button type="button" class="btn btn--quiet btn--sm" (click)="shiftDay(1)">Check the next day</button>
+      </li>
+    }
+  </ul>
+}

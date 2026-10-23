@@ -1,0 +1,67 @@
+<div class="auth auth--single">
+  <section class="panel auth__panel">
+    <h1>Create a patient account</h1>
+    <p class="muted">You'll be able to book your first appointment right after this.</p>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="field">
+        <label for="fullName">Full name</label>
+        <input id="fullName" formControlName="fullName" autocomplete="name" />
+        @if (form.controls.fullName.touched && form.controls.fullName.invalid) {
+          <span class="field__error">Enter your full name.</span>
+        }
+      </div>
+
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" type="email" formControlName="email" autocomplete="email" />
+        @if (form.controls.email.touched && form.controls.email.invalid) {
+          <span class="field__error">Enter a valid email address.</span>
+        }
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="phone">Phone <span class="optional">optional</span></label>
+          <input id="phone" type="tel" formControlName="phoneNumber" autocomplete="tel" />
+          @if (form.controls.phoneNumber.touched && form.controls.phoneNumber.invalid) {
+            <span class="field__error">Use digits only, 7 to 20 characters.</span>
+          }
+        </div>
+        <div class="field">
+          <label for="dob">Date of birth <span class="optional">optional</span></label>
+          <input id="dob" type="date" formControlName="dateOfBirth" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="gender">Gender <span class="optional">optional</span></label>
+        <select id="gender" formControlName="gender">
+          <option value="">Prefer not to say</option>
+          <option>Female</option>
+          <option>Male</option>
+          <option>Other</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" type="password" formControlName="password" autocomplete="new-password" />
+        <span class="field__hint">At least 6 characters.</span>
+        @if (form.controls.password.touched && form.controls.password.invalid) {
+          <span class="field__error">Password must be at least 6 characters.</span>
+        }
+      </div>
+
+      @if (error()) {
+        <p class="alert alert--error" role="alert">{{ error() }}</p>
+      }
+
+      <button class="btn btn--primary btn--block" type="submit" [disabled]="loading()">
+        {{ loading() ? 'Creating account…' : 'Create account' }}
+      </button>
+    </form>
+
+    <p class="auth__switch">Already registered? <a routerLink="/login">Sign in</a></p>
+  </section>
+</div>

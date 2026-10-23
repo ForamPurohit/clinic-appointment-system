@@ -1,0 +1,62 @@
+<div class="page-head">
+  <a class="back-link" [routerLink]="backLink()">← Back to appointments</a>
+  <h1>Move appointment</h1>
+</div>
+
+@if (loadError()) {
+  <p class="alert alert--error" role="alert">{{ loadError() }}</p>
+}
+
+@if (appointment(); as a) {
+  <div class="move-summary">
+    <div>
+      <span class="muted">Currently</span>
+      <strong>{{ a.startTime | date: 'EEE d MMM, h:mm a' }}</strong>
+    </div>
+    <span class="move-summary__arrow" aria-hidden="true">→</span>
+    <div [class.muted]="!newSlot()">
+      <span class="muted">New time</span>
+      <strong>{{ newSlot() ? (newSlot()!.startTime | date: 'EEE d MMM, h:mm a') : 'Pick below' }}</strong>
+    </div>
+    <p class="move-summary__who">{{ a.doctorName }}, {{ a.specializationName }}. {{ a.reason }}</p>
+  </div>
+
+  @if (!canMove()) {
+    <p class="alert alert--error" role="alert">
+      @if (a.status !== 'Scheduled') {
+        This appointment is {{ a.status === 'NoShow' ? 'a no-show' : a.status.toLowerCase() }} and can't be moved.
+      } @else if (movesLeft() <= 0 && !isAdmin()) {
+        This appointment has already been moved twice. Cancel it and book a new time instead.
+      } @else {
+        This appointment has already started and can't be moved.
+      }
+    </p>
+  } @else {
+    @if (!isAdmin()) {
+      <p class="muted">
+        You can move an appointment up to two times.
+        {{ movesLeft() === 1 ? 'This is your last change.' : '' }}
+      </p>
+    }
+
+    @if (doctor(); as d) {
+      <section class="section section--tight">
+        <h2>Pick a new day and time</h2>
+        <app-slot-picker [doctor]="d" [currentStart]="a.startTime" (slotChange)="newSlot.set($event)" />
+      </section>
+    }
+
+    @if (error()) {
+      <p class="alert alert--error" role="alert">{{ error() }}</p>
+    }
+
+    <div class="actions">
+      <button type="button" class="btn btn--primary btn--lg" (click)="confirm()" [disabled]="!newSlot() || saving()">
+        {{ saving() ? 'Moving…' : 'Move appointment' }}
+      </button>
+      <a class="btn btn--quiet btn--lg" [routerLink]="backLink()">Keep current time</a>
+    </div>
+  }
+} @else if (!loadError()) {
+  <p class="muted">Loading appointment…</p>
+}

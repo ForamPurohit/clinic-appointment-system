@@ -1,0 +1,39 @@
+<div class="page-head">
+  <h1>Patients</h1>
+  <p class="muted">Everyone with a patient account.</p>
+</div>
+
+<form class="filters" (ngSubmit)="load()">
+  <div class="field filters__grow">
+    <label for="p-search">Search by name or email</label>
+    <input id="p-search" type="search" name="search" [(ngModel)]="search" />
+  </div>
+  <div class="filters__actions">
+    <button type="submit" class="btn btn--primary btn--sm">Search</button>
+  </div>
+</form>
+
+@if (error()) {
+  <p class="alert alert--error" role="alert">{{ error() }}</p>
+}
+
+<div class="table-wrap">
+  <table class="table">
+    <thead>
+      <tr><th>Name</th><th>Email</th><th>Phone</th><th>Date of birth</th><th class="num">Visits</th></tr>
+    </thead>
+    <tbody>
+      @for (p of patients(); track p.id) {
+        <tr>
+          <td><strong>{{ p.fullName }}</strong>@if (p.gender) {<br /><span class="muted">{{ p.gender }}</span>}</td>
+          <td>{{ p.email }}</td>
+          <td>{{ p.phoneNumber || '—' }}</td>
+          <td>{{ p.dateOfBirth ? (p.dateOfBirth | date: 'd MMM y') : '—' }}</td>
+          <td class="num">{{ p.appointmentCount }}</td>
+        </tr>
+      } @empty {
+        <tr><td colspan="5" class="empty-cell">No patients found.</td></tr>
+      }
+    </tbody>
+  </table>
+</div>

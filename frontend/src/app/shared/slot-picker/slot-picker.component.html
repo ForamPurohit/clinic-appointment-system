@@ -1,0 +1,47 @@
+<div class="day-strip" role="listbox" aria-label="Day">
+  @for (day of days(); track day.iso) {
+    <button type="button" class="day" role="option"
+            [class.is-selected]="selectedDate() === day.iso"
+            [class.day--leave]="day.works && day.onLeave"
+            [attr.aria-selected]="selectedDate() === day.iso"
+            [attr.title]="day.onLeave ? 'Doctor on leave' : null"
+            [disabled]="!day.works || day.onLeave" (click)="chooseDate(day)">
+      <span class="day__name">{{ day.date | date: 'EEE' }}</span>
+      <span class="day__num">{{ day.date | date: 'd' }}</span>
+      <span class="day__month">{{ day.works && day.onLeave ? 'Leave' : (day.date | date: 'MMM') }}</span>
+    </button>
+  }
+</div>
+
+@if (error()) {
+  <p class="alert alert--error" role="alert">{{ error() }}</p>
+}
+
+@if (loading()) {
+  <p class="muted">Checking open times…</p>
+} @else if (selectedDate()) {
+  @if (slots().length) {
+    <p class="muted slot-count">
+      {{ openSlotCount() }} of {{ slots().length }} times open
+      @if (liveUpdated()) {
+        <span class="live-note" role="status">Updated just now</span>
+      }
+    </p>
+    <div class="slot-grid" role="listbox" aria-label="Time">
+      @for (slot of slots(); track slot.startTime) {
+        <button type="button" class="slot" role="option"
+                [class.slot--taken]="!slot.isAvailable && !isCurrent(slot)"
+                [class.slot--current]="isCurrent(slot)"
+                [class.slot--picked]="selectedSlot()?.startTime === slot.startTime"
+                [attr.aria-selected]="selectedSlot()?.startTime === slot.startTime"
+                [disabled]="!isSelectable(slot)" (click)="chooseSlot(slot)">
+          {{ slot.startTime | date: 'h:mm' }}<small>{{ isCurrent(slot) ? 'current' : (slot.startTime | date: 'a') }}</small>
+        </button>
+      }
+    </div>
+  } @else {
+    <p class="muted">No times on this day. Try another date.</p>
+  }
+} @else if (!hasOpenDay()) {
+  <p class="muted">This doctor has no open days in the next two weeks.</p>
+}

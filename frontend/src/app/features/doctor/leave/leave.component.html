@@ -1,0 +1,59 @@
+<div class="page-head">
+  <h1>Time off</h1>
+  <p class="muted">Days you add here can't be booked. Patients see them greyed out as "Leave".</p>
+</div>
+
+<div class="split">
+  <section class="panel form-panel">
+    <h2>Add leave</h2>
+    <form (ngSubmit)="add()">
+      <div class="field-row field-row--narrow">
+        <div class="field">
+          <label for="l-start">First day</label>
+          <input id="l-start" type="date" name="startDate" [min]="today" [ngModel]="startDate" (ngModelChange)="onStartChange($event)" />
+        </div>
+        <div class="field">
+          <label for="l-end">Last day</label>
+          <input id="l-end" type="date" name="endDate" [min]="startDate || today" [(ngModel)]="endDate" />
+        </div>
+      </div>
+      <div class="field">
+        <label for="l-reason">Reason <span class="optional">optional, only staff see this</span></label>
+        <input id="l-reason" name="reason" maxlength="200" [(ngModel)]="reason" placeholder="For example: medical conference" />
+      </div>
+      <p class="field__hint">If you already have patients booked in this period, ask the clinic admin to move them first.</p>
+      @if (error()) {
+        <p class="alert alert--error" role="alert">{{ error() }}</p>
+      }
+      <button type="submit" class="btn btn--primary" [disabled]="saving()">{{ saving() ? 'Adding…' : 'Add leave' }}</button>
+    </form>
+  </section>
+
+  <section>
+    <h2>Upcoming leave</h2>
+    @if (listError()) {
+      <p class="alert alert--error" role="alert">{{ listError() }}</p>
+    }
+    <ul class="leave-list">
+      @if (loading()) {
+        <li class="muted">Loading…</li>
+      }
+      @for (l of leaves(); track l.id) {
+        <li>
+          <div>
+            <strong>
+              {{ l.startDate | date: 'EEE d MMM' }}
+              @if (l.endDate !== l.startDate) { – {{ l.endDate | date: 'EEE d MMM' }} }
+            </strong>
+            <span class="muted">{{ dayCount(l) }} {{ dayCount(l) === 1 ? 'day' : 'days' }}{{ l.reason ? ', ' + l.reason : '' }}</span>
+          </div>
+          <button type="button" class="btn btn--danger-quiet btn--sm" (click)="remove(l)">Remove</button>
+        </li>
+      } @empty {
+        @if (!loading()) {
+          <li class="muted">No leave planned.</li>
+        }
+      }
+    </ul>
+  </section>
+</div>

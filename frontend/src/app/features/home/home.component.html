@@ -1,0 +1,59 @@
+<section class="hero">
+  <div class="hero__copy">
+    <h1>See the right doctor, at a time that suits you.</h1>
+    <p class="lead">
+      Pick a specialty, choose a doctor, and book an open slot. Your visit is confirmed straight away,
+      and you can cancel online if your plans change.
+    </p>
+    <div class="actions">
+      <a class="btn btn--primary btn--lg" [routerLink]="bookLink">
+        {{ auth.user()?.role === 'Patient' || !auth.user() ? 'Book an appointment' : 'Go to your workspace' }}
+      </a>
+      @if (!auth.user()) {
+        <a class="btn btn--quiet btn--lg" routerLink="/login">I have an account</a>
+      }
+    </div>
+  </div>
+
+  <figure class="slot-preview" aria-label="Example of the appointment picker">
+    <div class="slot-preview__head">
+      <div>
+        <strong>Dr. Priya Sharma</strong>
+        <span>General Medicine</span>
+      </div>
+      <span class="slot-preview__date">Tue 20 Oct</span>
+    </div>
+    <div class="slot-grid slot-grid--preview">
+      @for (slot of previewSlots; track slot.time; let i = $index) {
+        <span class="slot" [class.slot--taken]="!slot.open" [class.slot--picked]="i === 2">{{ slot.time }}</span>
+      }
+    </div>
+    <figcaption>Grey times are already taken. Open times can be booked in one tap.</figcaption>
+  </figure>
+</section>
+
+<section class="section">
+  <h2>Specialties at the clinic</h2>
+  @if (specializations().length) {
+    <ul class="specialty-list">
+      @for (s of specializations(); track s.id) {
+        <li>
+          <h3>{{ s.name }}</h3>
+          <p>{{ s.description }}</p>
+          <span class="muted">{{ s.doctorCount }} {{ s.doctorCount === 1 ? 'doctor' : 'doctors' }}</span>
+        </li>
+      }
+    </ul>
+  } @else {
+    <p class="muted">Specialties appear here once the API is running.</p>
+  }
+</section>
+
+<section class="section how">
+  <h2>How booking works</h2>
+  <ol class="steps">
+    <li><strong>Choose a specialty</strong><span>General medicine, cardiology, pediatrics and more.</span></li>
+    <li><strong>Pick a doctor and day</strong><span>Only days the doctor works are open.</span></li>
+    <li><strong>Take an open time</strong><span>Times update live, so two people can't take the same slot.</span></li>
+  </ol>
+</section>

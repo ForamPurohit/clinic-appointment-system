@@ -1,0 +1,97 @@
+<div class="page-head page-head--split">
+  <div>
+    <h1>My appointments</h1>
+    <p class="muted">Upcoming visits and your history at the clinic.</p>
+  </div>
+  <a class="btn btn--primary" routerLink="/patient/book">Book a visit</a>
+</div>
+
+<div class="tabs" role="tablist">
+  <button type="button" role="tab" [class.is-active]="tab() === 'upcoming'" [attr.aria-selected]="tab() === 'upcoming'"
+          (click)="tab.set('upcoming')">Upcoming ({{ upcoming().length }})</button>
+  <button type="button" role="tab" [class.is-active]="tab() === 'past'" [attr.aria-selected]="tab() === 'past'"
+          (click)="tab.set('past')">Past and cancelled ({{ past().length }})</button>
+</div>
+
+@if (error()) {
+  <p class="alert alert--error" role="alert">{{ error() }}</p>
+}
+
+@if (loading()) {
+  <p class="muted">Loading appointments…</p>
+} @else {
+  <ul class="appt-list">
+    @for (a of visible(); track a.id) {
+      <li class="appt">
+        <div class="appt__when">
+          <span class="appt__day">{{ a.startTime | date: 'EEE d MMM' }}</span>
+          <span class="appt__time">{{ a.startTime | date: 'h:mm a' }}</span>
+        </div>
+        <div class="appt__body">
+          <strong>{{ a.doctorName }}</strong>
+          <span class="muted">{{ a.specializationName }}</span>
+          <p>{{ a.reason }}</p>
+          @if (a.notes) {
+            <p class="appt__notes"><span>Doctor's note:</span> {{ a.notes }}</p>
+          }
+          @if (a.rescheduleCount > 0 && a.status === 'Scheduled') {
+            <span class="muted appt__moved">Moved {{ a.rescheduleCount === 1 ? 'once' : 'twice' }}</span>
+          }
+
+          @if (reviewingId() === a.id) {
+            <form class="review-form" (ngSubmit)="submitReview(a)">
+              <fieldset>
+                <legend>How was your visit with {{ a.doctorName }}?</legend>
+                <div class="star-input" role="radiogroup" aria-label="Rating">
+                  @for (n of stars; track n) {
+                    <button type="button" role="radio" class="star-input__star"
+                            [class.is-on]="n <= reviewRating()" [attr.aria-checked]="n === reviewRating()"
+                            [attr.aria-label]="n + (n === 1 ? ' star' : ' stars')" (click)="reviewRating.set(n)">★</button>
+                  }
+                </div>
+              </fieldset>
+              <label for="review-{{ a.id }}">Comment <span class="optional">optional, shown to other patients</span></label>
+              <textarea id="review-{{ a.id }}" name="comment" rows="3" maxlength="1000" [(ngModel)]="reviewComment"
+                        placeholder="What went well? What could be better?"></textarea>
+              @if (reviewError()) {
+                <p class="alert alert--error" role="alert">{{ reviewError() }}</p>
+              }
+              <div class="actions">
+                <button type="submit" class="btn btn--primary btn--sm" [disabled]="reviewSaving()">
+                  {{ reviewSaving() ? 'Saving…' : 'Submit review' }}
+                </button>
+                <button type="button" class="btn btn--quiet btn--sm" (click)="reviewingId.set(null)">Not now</button>
+              </div>
+            </form>
+          }
+        </div>
+        <div class="appt__side">
+          <app-status-badge [status]="a.status" />
+          @if (tab() === 'upcoming') {
+            @if (canReschedule(a)) {
+              <a class="btn btn--quiet btn--sm" [routerLink]="['/reschedule', a.id]">Reschedule</a>
+            }
+            <button type="button" class="btn btn--danger-quiet btn--sm" (click)="cancel(a)"
+                    [disabled]="cancellingId() === a.id">
+              {{ cancellingId() === a.id ? 'Cancelling…' : 'Cancel' }}
+            </button>
+          }
+          @if (a.rating) {
+            <span class="rated">You rated <app-stars [value]="a.rating" [showValue]="false" /></span>
+          } @else if (canReview(a) && reviewingId() !== a.id) {
+            <button type="button" class="btn btn--quiet btn--sm" (click)="openReview(a)">Rate this visit</button>
+          }
+        </div>
+      </li>
+    } @empty {
+      <li class="empty">
+        @if (tab() === 'upcoming') {
+          <p>You have no upcoming visits.</p>
+          <a class="btn btn--primary" routerLink="/patient/book">Book an appointment</a>
+        } @else {
+          <p>Past and cancelled visits will show up here.</p>
+        }
+      </li>
+    }
+  </ul>
+}

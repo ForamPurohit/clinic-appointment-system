@@ -1,0 +1,37 @@
+<header class="topbar">
+  <div class="topbar__inner">
+    <a class="brand" routerLink="/" (click)="closeMenu()">
+      <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true">
+        <rect width="32" height="32" rx="7" />
+        <path d="M13 7h6v6h6v6h-6v6h-6v-6H7v-6h6z" />
+      </svg>
+      <span>Lakeview Clinic</span>
+    </a>
+
+    @if (auth.user(); as user) {
+      <button class="topbar__toggle" type="button" (click)="toggleMenu()"
+              [attr.aria-expanded]="menuOpen()" aria-controls="main-nav">
+        Menu
+      </button>
+
+      <nav id="main-nav" class="topbar__nav" [class.is-open]="menuOpen()">
+        @for (link of links(); track link.path) {
+          <a [routerLink]="link.path" routerLinkActive="is-active" (click)="closeMenu()">{{ link.label }}</a>
+        }
+        <div class="topbar__user">
+          <span class="avatar" aria-hidden="true">{{ initials() }}</span>
+          <span class="topbar__name">
+            {{ user.fullName }}
+            <small>{{ user.role }}</small>
+          </span>
+          <button type="button" class="btn btn--quiet btn--sm" (click)="auth.logout()">Sign out</button>
+        </div>
+      </nav>
+    } @else {
+      <nav class="topbar__nav topbar__nav--guest">
+        <a routerLink="/login" routerLinkActive="is-active">Sign in</a>
+        <a routerLink="/register" class="btn btn--primary btn--sm">Create account</a>
+      </nav>
+    }
+  </div>
+</header>

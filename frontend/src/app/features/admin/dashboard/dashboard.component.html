@@ -1,0 +1,65 @@
+<div class="page-head">
+  <h1>Clinic overview</h1>
+  <p class="muted">{{ now | date: 'EEEE d MMMM y' }}</p>
+</div>
+
+@if (error()) {
+  <p class="alert alert--error" role="alert">{{ error() }}</p>
+}
+
+@if (stats(); as s) {
+  <dl class="stats">
+    <div class="stats__item stats__item--lead">
+      <dt>Visits today</dt>
+      <dd>{{ s.todayAppointments }}</dd>
+    </div>
+    <div class="stats__item">
+      <dt>Upcoming</dt>
+      <dd>{{ s.upcomingAppointments }}</dd>
+    </div>
+    <div class="stats__item">
+      <dt>Completed</dt>
+      <dd>{{ s.completedAppointments }}</dd>
+    </div>
+    <div class="stats__item">
+      <dt>Cancelled</dt>
+      <dd>{{ s.cancelledAppointments }}</dd>
+    </div>
+    <div class="stats__item">
+      <dt>Active doctors</dt>
+      <dd>{{ s.totalDoctors }}</dd>
+    </div>
+    <div class="stats__item">
+      <dt>Patients</dt>
+      <dd>{{ s.totalPatients }}</dd>
+    </div>
+  </dl>
+}
+
+<section class="section">
+  <div class="section__head">
+    <h2>Today's appointments</h2>
+    <a routerLink="/admin/appointments">All appointments</a>
+  </div>
+
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr><th>Time</th><th>Patient</th><th>Doctor</th><th>Reason</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        @for (a of today(); track a.id) {
+          <tr>
+            <td class="num">{{ a.startTime | date: 'h:mm a' }}</td>
+            <td>{{ a.patientName }}</td>
+            <td>{{ a.doctorName }}<br /><span class="muted">{{ a.specializationName }}</span></td>
+            <td>{{ a.reason }}</td>
+            <td><app-status-badge [status]="a.status" /></td>
+          </tr>
+        } @empty {
+          <tr><td colspan="5" class="empty-cell">No appointments today.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>

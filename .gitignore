@@ -1,0 +1,25 @@
+# ---------- .NET ----------
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.rsuser
+TestResults/
+appsettings.*.local.json
+
+# ---------- Angular / Node ----------
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+npm-debug.log*
+yarn-error.log*
+
+# ---------- Editors & OS ----------
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+frontend/coverage/
+backend/ClinicAppointment.API/emails/

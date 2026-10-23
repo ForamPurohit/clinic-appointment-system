@@ -1,0 +1,130 @@
+<div class="page-head">
+  <h1>Book an appointment</h1>
+  <p class="muted">Four steps. Your visit is confirmed as soon as you finish, and we'll email you a reminder the day before.</p>
+</div>
+
+@if (booked(); as appt) {
+  <section class="panel confirmation" role="status">
+    <h2>You're booked in</h2>
+    <p class="confirmation__when">
+      {{ appt.startTime | date: 'EEEE d MMMM' }}<br />
+      <strong>{{ appt.startTime | date: 'h:mm a' }}</strong> with {{ appt.doctorName }}
+    </p>
+    <p class="muted">{{ appt.specializationName }}. Reason for visit: {{ appt.reason }}</p>
+    <p class="muted">A confirmation email is on its way. Please arrive 10 minutes early.</p>
+    <div class="actions">
+      <a class="btn btn--primary" routerLink="/patient/appointments">View my appointments</a>
+      <button type="button" class="btn btn--quiet" (click)="startOver()">Book another</button>
+    </div>
+  </section>
+} @else {
+  <ol class="booking">
+    <!-- Step 1 -->
+    <li class="booking__step" [class.is-done]="selectedSpecialization()">
+      <h2 class="booking__title">Choose a specialty</h2>
+      <div class="chip-row">
+        @for (s of specializations(); track s.id) {
+          <button type="button" class="chip" [class.is-selected]="selectedSpecialization()?.id === s.id"
+                  [disabled]="s.doctorCount === 0" (click)="chooseSpecialization(s)">
+            {{ s.name }}
+          </button>
+        } @empty {
+          <p class="muted">Loading specialties…</p>
+        }
+      </div>
+    </li>
+
+    <!-- Step 2 -->
+    <li class="booking__step" [class.is-locked]="!selectedSpecialization()" [class.is-done]="selectedDoctor()">
+      <h2 class="booking__title">Pick a doctor</h2>
+      @if (selectedSpecialization()) {
+        @if (loadingDoctors()) {
+          <p class="muted">Finding doctors…</p>
+        } @else {
+          <div class="doctor-list">
+            @for (d of doctors(); track d.id) {
+              <div class="doctor-option" [class.is-selected]="selectedDoctor()?.id === d.id">
+                <button type="button" class="doctor-option__pick" (click)="chooseDoctor(d)">
+                  <span class="doctor-option__name">{{ d.fullName }}</span>
+                  @if (d.reviewCount > 0) {
+                    <app-stars [value]="d.averageRating ?? null" [count]="d.reviewCount" />
+                  } @else {
+                    <span class="doctor-option__meta">New to Lakeview, no reviews yet</span>
+                  }
+                  <span class="doctor-option__meta">
+                    {{ d.yearsOfExperience }} years of experience, {{ d.consultationFee | currency: 'INR' : 'symbol' : '1.0-0' }} per visit
+                  </span>
+                  <span class="doctor-option__meta">
+                    {{ workingDaysLabel(d) }}, {{ d.workStartTime }}–{{ d.workEndTime }}
+                  </span>
+                  @if (d.bio) {
+                    <span class="doctor-option__bio">{{ d.bio }}</span>
+                  }
+                </button>
+                @if (d.reviewCount > 0) {
+                  <button type="button" class="link-button" (click)="toggleReviews(d, $event)"
+                          [attr.aria-expanded]="openReviewsFor() === d.id">
+                    {{ openReviewsFor() === d.id ? 'Hide reviews' : 'Read reviews' }}
+                  </button>
+                }
+                @if (openReviewsFor() === d.id) {
+                  <ul class="review-list">
+                    @if (!reviews()) {
+                      <li class="muted">Loading reviews…</li>
+                    }
+                    @for (r of reviews()?.reviews ?? []; track r.id) {
+                      <li>
+                        <app-stars [value]="r.rating" [showValue]="false" />
+                        <span class="review-list__who">{{ r.patientName }}, {{ r.createdAt | date: 'MMM y' }}</span>
+                        @if (r.comment) {
+                          <p>{{ r.comment }}</p>
+                        }
+                      </li>
+                    }
+                  </ul>
+                }
+              </div>
+            } @empty {
+              <p class="muted">No doctors are available in this specialty right now.</p>
+            }
+          </div>
+        }
+      }
+    </li>
+
+    <!-- Step 3 -->
+    <li class="booking__step" [class.is-locked]="!selectedDoctor()" [class.is-done]="selectedSlot()">
+      <h2 class="booking__title">Choose a day and time</h2>
+      @if (selectedDoctor(); as doctor) {
+        <app-slot-picker [doctor]="doctor" (slotChange)="onSlotChange($event)" />
+      }
+    </li>
+
+    <!-- Step 4 -->
+    <li class="booking__step" [class.is-locked]="!selectedSlot()">
+      <h2 class="booking__title">Confirm your visit</h2>
+      @if (selectedSlot(); as slot) {
+        <div class="summary">
+          <p>
+            <strong>{{ slot.startTime | date: 'EEEE d MMMM, h:mm a' }}</strong><br />
+            {{ selectedDoctor()?.fullName }}, {{ selectedSpecialization()?.name }}
+          </p>
+        </div>
+        <div class="field">
+          <label for="reason">What's the visit for?</label>
+          <textarea id="reason" rows="3" [(ngModel)]="reason" maxlength="500"
+                    placeholder="For example: follow-up on blood test results"></textarea>
+          <span class="field__hint">A short note helps the doctor prepare.</span>
+        </div>
+        <button type="button" class="btn btn--primary btn--lg" (click)="confirm()"
+                [disabled]="booking() || reason.trim().length < 3">
+          {{ booking() ? 'Booking…' : 'Book appointment' }}
+        </button>
+      }
+    </li>
+  </ol>
+
+  @if (error()) {
+    <p class="alert alert--error" role="alert">{{ error() }}</p>
+  }
+}
